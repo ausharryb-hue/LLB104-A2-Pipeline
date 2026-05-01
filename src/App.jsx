@@ -137,7 +137,6 @@ export default function App() {
       data: {
         ...node.data,
         onLabelChange: (label) => updateNodeData(node.id, { label }),
-        onStatusChange: (status) => updateNodeData(node.id, { status }),
         onAddChild: () => addChild(node.id, node.type),
         onDelete: () => deleteNode(node.id),
       },
@@ -207,8 +206,8 @@ export default function App() {
       <footer className="footer">
         <span>
           Double-click a node to edit &nbsp;·&nbsp;
-          Click <strong>+ Branch</strong> or <strong>+ Point</strong> to expand &nbsp;·&nbsp;
-          Click the status badge on a point to cycle To Do → In Progress → Done
+          Click <strong>+ Branch</strong> or <strong>+ Point</strong> to keep expanding &nbsp;·&nbsp;
+          Click <strong>✕</strong> to delete a node and its children
         </span>
       </footer>
     </div>
