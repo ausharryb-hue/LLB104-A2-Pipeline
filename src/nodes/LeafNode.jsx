@@ -13,10 +13,10 @@ export default function LeafNode({ data, selected }) {
 
   return (
     <div
-      className={`node node-leaf${selected ? ' selected' : ''}`}
+      className={`node node-leaf${selected ? ' node--selected' : ''}`}
       onDoubleClick={() => { setEditing(true); setDraft(data.label) }}
     >
-      <Handle type="target" position={Position.Top} />
+      <Handle type="target" position={Position.Top} className="handle" />
       {editing ? (
         <textarea
           className="node-edit"
@@ -30,10 +30,10 @@ export default function LeafNode({ data, selected }) {
         <div className="node-label">{data.label}</div>
       )}
       <div className="node-actions">
-        <button className="btn-add" onClick={data.onAddChild} title="Add sub-point">+ Point</button>
-        <button className="btn-delete" onClick={data.onDelete} title="Delete">✕</button>
+        <button className="btn-add" onClick={data.onAddChild}>+ Add Point</button>
+        <button className="btn-delete" onClick={data.onDelete}>✕</button>
       </div>
-      <Handle type="source" position={Position.Bottom} />
+      <Handle type="source" position={Position.Bottom} className="handle" />
     </div>
   )
 }

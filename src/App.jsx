@@ -1,215 +1,97 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import {
-  ReactFlow,
-  Background,
-  Controls,
-  MiniMap,
-  useNodesState,
-  useEdgesState,
-  MarkerType,
-} from '@xyflow/react'
-import '@xyflow/react/dist/style.css'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import './app.css'
 
-import RootNode from './nodes/RootNode'
-import AreaNode from './nodes/AreaNode'
-import LeafNode from './nodes/LeafNode'
-import { getLayoutedElements } from './utils/layout'
-
-const nodeTypes = { root: RootNode, area: AreaNode, leaf: LeafNode }
-
-const STORAGE_KEY = 'llb104-essay-tree'
-
-function uid() {
-  return `n-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
-}
-
-const defaultNodes = [
-  {
-    id: 'root',
-    type: 'root',
-    position: { x: 0, y: 0 },
-    data: { label: 'Double-click to enter your central argument' },
-  },
-]
-
-const defaultEdges = []
-
-function loadState() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw)
-  } catch {}
-  return null
-}
-
-function saveState(nodes, edges) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ nodes, edges }))
-  } catch {}
-}
-
-const edgeDefaults = {
-  type: 'smoothstep',
-  markerEnd: { type: MarkerType.ArrowClosed, color: '#6b6375' },
-  style: { stroke: '#6b6375', strokeWidth: 2 },
-}
+import TabBar from './components/TabBar'
+import PipelineFlow from './components/PipelineFlow'
+import { loadAll, saveAll, createPipeline, uid } from './utils/storage'
 
 export default function App() {
-  const saved = useMemo(() => loadState(), [])
+  const [data, setData] = useState(() => loadAll())
+  const flowStateRef = useRef(null)
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(saved?.nodes ?? defaultNodes)
-  const [edges, setEdges, onEdgesChange] = useEdgesState(saved?.edges ?? defaultEdges)
-  const [title, setTitle] = useState('LLB104 — Essay Pipeline')
-  const [editingTitle, setEditingTitle] = useState(false)
+  const activePipeline = data.pipelines.find(p => p.id === data.activeId)
 
-  // Live refs so callbacks always see current state without re-creating
-  const nodesRef = useRef(nodes)
-  const edgesRef = useRef(edges)
-  useEffect(() => { nodesRef.current = nodes }, [nodes])
-  useEffect(() => { edgesRef.current = edges }, [edges])
+  useEffect(() => {
+    saveAll(data.pipelines, data.activeId)
+  }, [data])
 
-  useEffect(() => { saveState(nodes, edges) }, [nodes, edges])
+  // Snapshot current flow state into the active pipeline before switching
+  function snapshotCurrent(pipelines, activeId) {
+    if (!flowStateRef.current) return pipelines
+    const nodes = flowStateRef.current.getNodes()
+    const edges = flowStateRef.current.getEdges()
+    return pipelines.map(p => p.id === activeId ? { ...p, nodes, edges } : p)
+  }
 
-  const relayout = useCallback(() => {
-    const { nodes: ln, edges: le } = getLayoutedElements(nodesRef.current, edgesRef.current)
-    setNodes(ln)
-    setEdges(le)
-  }, [setNodes, setEdges])
+  const handleSwitch = useCallback((newId) => {
+    setData(prev => {
+      const snapped = snapshotCurrent(prev.pipelines, prev.activeId)
+      return { pipelines: snapped, activeId: newId }
+    })
+  }, [])
 
-  const updateNodeData = useCallback((id, patch) => {
-    setNodes(nds => nds.map(n => n.id === id ? { ...n, data: { ...n.data, ...patch } } : n))
-  }, [setNodes])
+  const handleAdd = useCallback(() => {
+    const p = createPipeline(`Pipeline ${data.pipelines.length + 1}`)
+    setData(prev => {
+      const snapped = snapshotCurrent(prev.pipelines, prev.activeId)
+      return { pipelines: [...snapped, p], activeId: p.id }
+    })
+  }, [data.pipelines.length])
 
-  const addChild = useCallback((parentId, parentType) => {
-    const childType = parentType === 'root' ? 'area' : 'leaf'
-    const childId = uid()
-    const label = childType === 'area' ? 'New area' : 'New point'
+  const handleRename = useCallback((id, name) => {
+    setData(prev => ({
+      ...prev,
+      pipelines: prev.pipelines.map(p => p.id === id ? { ...p, name } : p),
+    }))
+  }, [])
 
-    const newNode = {
-      id: childId,
-      type: childType,
-      position: { x: 0, y: 0 },
-      data: { label, status: 'todo' },
-    }
-    const newEdge = {
-      id: `e-${parentId}-${childId}`,
-      source: parentId,
-      target: childId,
-      ...edgeDefaults,
-    }
+  const handleDelete = useCallback((id) => {
+    setData(prev => {
+      if (prev.pipelines.length <= 1) return prev
+      const next = prev.pipelines.filter(p => p.id !== id)
+      const activeId = prev.activeId === id ? next[0].id : prev.activeId
+      return { pipelines: next, activeId }
+    })
+  }, [])
 
-    const nextNodes = [...nodesRef.current, newNode]
-    const nextEdges = [...edgesRef.current, newEdge]
-    const { nodes: ln, edges: le } = getLayoutedElements(nextNodes, nextEdges)
-    setNodes(ln)
-    setEdges(le)
-  }, [setNodes, setEdges])
+  const handleUpdate = useCallback((nodes, edges) => {
+    setData(prev => ({
+      ...prev,
+      pipelines: prev.pipelines.map(p =>
+        p.id === prev.activeId ? { ...p, nodes, edges } : p
+      ),
+    }))
+  }, [])
 
-  const deleteNode = useCallback((id) => {
-    const curNodes = nodesRef.current
-    const curEdges = edgesRef.current
-
-    const descendants = new Set([id])
-    let changed = true
-    while (changed) {
-      changed = false
-      curEdges.forEach(e => {
-        if (descendants.has(e.source) && !descendants.has(e.target)) {
-          descendants.add(e.target)
-          changed = true
-        }
-      })
-    }
-
-    const nextNodes = curNodes.filter(n => !descendants.has(n.id))
-    const nextEdges = curEdges.filter(
-      e => !descendants.has(e.source) && !descendants.has(e.target)
-    )
-    const { nodes: ln, edges: le } = getLayoutedElements(nextNodes, nextEdges)
-    setNodes(ln)
-    setEdges(le)
-  }, [setNodes, setEdges])
-
-  const nodesWithHandlers = useMemo(() =>
-    nodes.map(node => ({
-      ...node,
-      data: {
-        ...node.data,
-        onLabelChange: (label) => updateNodeData(node.id, { label }),
-        onAddChild: () => addChild(node.id, node.type),
-        onDelete: () => deleteNode(node.id),
-      },
-    })),
-    [nodes, updateNodeData, addChild, deleteNode]
-  )
+  const handleStateReady = useCallback((state) => {
+    flowStateRef.current = state
+  }, [])
 
   return (
     <div className="app">
       <header className="header">
-        {editingTitle ? (
-          <input
-            className="title-edit"
-            value={title}
-            autoFocus
-            onChange={e => setTitle(e.target.value)}
-            onBlur={() => setEditingTitle(false)}
-            onKeyDown={e => e.key === 'Enter' && setEditingTitle(false)}
-          />
-        ) : (
-          <h1 className="title" onDoubleClick={() => setEditingTitle(true)}>{title}</h1>
-        )}
-        <div className="header-actions">
-          <button className="btn-layout" onClick={relayout}>Auto Layout</button>
-          <button
-            className="btn-layout"
-            onClick={() => {
-              if (confirm('Reset the tree? This cannot be undone.')) {
-                setNodes(defaultNodes)
-                setEdges(defaultEdges)
-              }
-            }}
-          >
-            Reset
-          </button>
-        </div>
+        <span className="header-title">Essay Pipeline</span>
+        <span className="header-hint">Double-click any node to edit · Double-click a tab to rename</span>
       </header>
 
-      <div className="canvas">
-        <ReactFlow
-          nodes={nodesWithHandlers}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          nodeTypes={nodeTypes}
-          fitView
-          fitViewOptions={{ padding: 0.3 }}
-          minZoom={0.2}
-          maxZoom={2}
-          proOptions={{ hideAttribution: true }}
-        >
-          <Background color="#2a2a3a" gap={24} size={1} />
-          <Controls />
-          <MiniMap
-            nodeColor={(n) => {
-              if (n.type === 'root') return '#c9a84c'
-              if (n.type === 'area') return '#4a7fb5'
-              const s = n.data?.status || 'todo'
-              return s === 'done' ? '#4a9e6b' : s === 'in-progress' ? '#b07d3a' : '#5a5a7a'
-            }}
-            maskColor="rgba(15,17,23,0.7)"
-            style={{ background: '#1a1c26' }}
-          />
-        </ReactFlow>
-      </div>
+      <TabBar
+        pipelines={data.pipelines}
+        activeId={data.activeId}
+        onSwitch={handleSwitch}
+        onAdd={handleAdd}
+        onRename={handleRename}
+        onDelete={handleDelete}
+      />
 
-      <footer className="footer">
-        <span>
-          Double-click a node to edit &nbsp;·&nbsp;
-          Click <strong>+ Branch</strong> or <strong>+ Point</strong> to keep expanding &nbsp;·&nbsp;
-          Click <strong>✕</strong> to delete a node and its children
-        </span>
-      </footer>
+      {activePipeline && (
+        <PipelineFlow
+          key={data.activeId}
+          initialNodes={activePipeline.nodes}
+          initialEdges={activePipeline.edges}
+          onUpdate={handleUpdate}
+          onStateReady={handleStateReady}
+        />
+      )}
     </div>
   )
 }

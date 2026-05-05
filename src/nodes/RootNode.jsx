@@ -13,10 +13,10 @@ export default function RootNode({ data, selected }) {
 
   return (
     <div
-      className={`node node-root${selected ? ' selected' : ''}`}
+      className={`node node-root${selected ? ' node--selected' : ''}`}
       onDoubleClick={() => { setEditing(true); setDraft(data.label) }}
     >
-      <div className="node-tag">Central Argument</div>
+      <div className="node-eyebrow">Central Argument</div>
       {editing ? (
         <textarea
           className="node-edit"
@@ -27,12 +27,12 @@ export default function RootNode({ data, selected }) {
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitEdit() } }}
         />
       ) : (
-        <div className="node-label">{data.label}</div>
+        <div className="node-label node-label--root">{data.label}</div>
       )}
       <div className="node-actions">
-        <button className="btn-add" onClick={data.onAddChild} title="Add branch">+ Branch</button>
+        <button className="btn-add" onClick={data.onAddChild}>+ Add Branch</button>
       </div>
-      <Handle type="source" position={Position.Bottom} />
+      <Handle type="source" position={Position.Bottom} className="handle" />
     </div>
   )
 }

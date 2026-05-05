@@ -13,11 +13,11 @@ export default function AreaNode({ data, selected }) {
 
   return (
     <div
-      className={`node node-area${selected ? ' selected' : ''}`}
+      className={`node node-area${selected ? ' node--selected' : ''}`}
       onDoubleClick={() => { setEditing(true); setDraft(data.label) }}
     >
-      <Handle type="target" position={Position.Top} />
-      <div className="node-tag">Area</div>
+      <Handle type="target" position={Position.Top} className="handle" />
+      <div className="node-eyebrow">Area</div>
       {editing ? (
         <textarea
           className="node-edit"
@@ -31,10 +31,10 @@ export default function AreaNode({ data, selected }) {
         <div className="node-label">{data.label}</div>
       )}
       <div className="node-actions">
-        <button className="btn-add" onClick={data.onAddChild} title="Add sub-point">+ Point</button>
-        <button className="btn-delete" onClick={data.onDelete} title="Delete">✕</button>
+        <button className="btn-add" onClick={data.onAddChild}>+ Add Point</button>
+        <button className="btn-delete" onClick={data.onDelete}>✕</button>
       </div>
-      <Handle type="source" position={Position.Bottom} />
+      <Handle type="source" position={Position.Bottom} className="handle" />
     </div>
   )
 }
