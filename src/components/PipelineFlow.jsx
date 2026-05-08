@@ -33,7 +33,6 @@ export default function PipelineFlow({ initialNodes, initialEdges, onUpdate, onS
   useEffect(() => { nodesRef.current = nodes }, [nodes])
   useEffect(() => { edgesRef.current = edges }, [edges])
 
-  // Expose live getters to parent so it can snapshot before a tab switch
   useEffect(() => {
     onStateReady({
       getNodes: () => nodesRef.current,
@@ -41,7 +40,6 @@ export default function PipelineFlow({ initialNodes, initialEdges, onUpdate, onS
     })
   }, [onStateReady])
 
-  // Persist on every change
   useEffect(() => { onUpdate(nodes, edges) }, [nodes, edges, onUpdate])
 
   const relayout = useCallback(() => {
@@ -58,44 +56,26 @@ export default function PipelineFlow({ initialNodes, initialEdges, onUpdate, onS
     const childType = parentType === 'root' ? 'area' : 'leaf'
     const childId = uid()
     const label = childType === 'area' ? 'New area' : 'New point'
-
-    const newNode = {
-      id: childId,
-      type: childType,
-      position: { x: 0, y: 0 },
-      data: { label },
-    }
-    const newEdge = {
-      id: `e-${parentId}-${childId}`,
-      source: parentId,
-      target: childId,
-      ...edgeDefaults,
-    }
-
-    const nextNodes = [...nodesRef.current, newNode]
-    const nextEdges = [...edgesRef.current, newEdge]
-    const { nodes: ln, edges: le } = getLayoutedElements(nextNodes, nextEdges)
+    const newNode = { id: childId, type: childType, position: { x: 0, y: 0 }, data: { label } }
+    const newEdge = { id: `e-${parentId}-${childId}`, source: parentId, target: childId, ...edgeDefaults }
+    const { nodes: ln, edges: le } = getLayoutedElements([...nodesRef.current, newNode], [...edgesRef.current, newEdge])
     setNodes(ln)
     setEdges(le)
   }, [setNodes, setEdges])
 
   const deleteNode = useCallback((id) => {
-    const curNodes = nodesRef.current
-    const curEdges = edgesRef.current
     const descendants = new Set([id])
     let changed = true
     while (changed) {
       changed = false
-      curEdges.forEach(e => {
-        if (descendants.has(e.source) && !descendants.has(e.target)) {
-          descendants.add(e.target)
-          changed = true
-        }
+      edgesRef.current.forEach(e => {
+        if (descendants.has(e.source) && !descendants.has(e.target)) { descendants.add(e.target); changed = true }
       })
     }
-    const nextNodes = curNodes.filter(n => !descendants.has(n.id))
-    const nextEdges = curEdges.filter(e => !descendants.has(e.source) && !descendants.has(e.target))
-    const { nodes: ln, edges: le } = getLayoutedElements(nextNodes, nextEdges)
+    const { nodes: ln, edges: le } = getLayoutedElements(
+      nodesRef.current.filter(n => !descendants.has(n.id)),
+      edgesRef.current.filter(e => !descendants.has(e.source) && !descendants.has(e.target))
+    )
     setNodes(ln)
     setEdges(le)
   }, [setNodes, setEdges])

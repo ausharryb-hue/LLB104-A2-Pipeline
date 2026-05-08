@@ -46,7 +46,6 @@ export default function TabBar({ pipelines, activeId, onSwitch, onAdd, onRename,
               <button
                 className="tab-close"
                 onClick={e => { e.stopPropagation(); onDelete(p.id) }}
-                title="Delete pipeline"
               >
                 ×
               </button>
@@ -54,7 +53,7 @@ export default function TabBar({ pipelines, activeId, onSwitch, onAdd, onRename,
           </div>
         ))}
       </div>
-      <button className="tab-add" onClick={onAdd} title="New pipeline">+</button>
+      <button className="tab-add" onClick={onAdd}>+</button>
     </div>
   )
 }

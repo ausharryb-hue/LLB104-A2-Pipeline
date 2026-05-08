@@ -27,7 +27,6 @@ body {
 
 #root { height: 100vh; display: flex; flex-direction: column; }
 
-/* ── App shell ───────────────────────────────────────────── */
 .app { display: flex; flex-direction: column; height: 100vh; }
 
 /* ── Header ─────────────────────────────────────────────── */
@@ -93,13 +92,9 @@ body {
   transition: color 0.12s, border-color 0.12s, background 0.12s;
   user-select: none;
   white-space: nowrap;
-  position: relative;
 }
 
-.tab:hover {
-  color: var(--text-1);
-  background: var(--surface-2);
-}
+.tab:hover { color: var(--text-1); background: var(--surface-2); }
 
 .tab--active {
   color: var(--text-1);
@@ -107,11 +102,7 @@ body {
   background: var(--surface-2);
 }
 
-.tab-name {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+.tab-name { flex: 1; overflow: hidden; text-overflow: ellipsis; }
 
 .tab-edit {
   flex: 1;
@@ -190,7 +181,7 @@ body {
   border-color: var(--border-3);
 }
 
-/* ── Nodes — shared ──────────────────────────────────────── */
+/* ── Nodes ───────────────────────────────────────────────── */
 .node {
   font-family: var(--font);
   display: flex;
@@ -230,7 +221,6 @@ body {
 .node-label--root {
   font-size: 14px;
   font-weight: 600;
-  color: var(--text-1);
 }
 
 .node-edit {
@@ -248,13 +238,8 @@ body {
   min-height: 52px;
 }
 
-.node-actions {
-  display: flex;
-  gap: 5px;
-  margin-top: 1px;
-}
+.node-actions { display: flex; gap: 5px; margin-top: 1px; }
 
-/* ── Root node ───────────────────────────────────────────── */
 .node-root {
   width: 300px;
   background: var(--surface-3);
@@ -262,13 +247,8 @@ body {
   border-width: 1.5px;
 }
 
-/* ── Area node ───────────────────────────────────────────── */
-.node-area {
-  width: 220px;
-  background: var(--surface-2);
-}
+.node-area { width: 220px; }
 
-/* ── Leaf node ───────────────────────────────────────────── */
 .node-leaf {
   width: 190px;
   background: var(--surface-1);
@@ -338,7 +318,6 @@ body {
   background: var(--surface-2) !important;
   border-bottom: 1px solid var(--border-1) !important;
   fill: var(--text-3) !important;
-  transition: fill 0.12s !important;
 }
 
 .react-flow__controls-button:hover {
@@ -350,5 +329,3 @@ body {
   border-radius: var(--radius) !important;
   overflow: hidden;
 }
-
-.react-flow__edge-path { stroke: var(--border-2); }

@@ -14,21 +14,17 @@ export function getLayoutedElements(nodes, edges) {
     g.setNode(node.id, { width: w, height: h })
   })
 
-  edges.forEach((edge) => {
-    g.setEdge(edge.source, edge.target)
-  })
+  edges.forEach((edge) => { g.setEdge(edge.source, edge.target) })
 
   dagre.layout(g)
 
-  const layoutedNodes = nodes.map((node) => {
-    const n = g.node(node.id)
-    const w = node.type === 'root' ? 320 : NODE_WIDTH
-    const h = node.type === 'root' ? 120 : NODE_HEIGHT
-    return {
-      ...node,
-      position: { x: n.x - w / 2, y: n.y - h / 2 },
-    }
-  })
-
-  return { nodes: layoutedNodes, edges }
+  return {
+    nodes: nodes.map((node) => {
+      const n = g.node(node.id)
+      const w = node.type === 'root' ? 320 : NODE_WIDTH
+      const h = node.type === 'root' ? 120 : NODE_HEIGHT
+      return { ...node, position: { x: n.x - w / 2, y: n.y - h / 2 } }
+    }),
+    edges,
+  }
 }

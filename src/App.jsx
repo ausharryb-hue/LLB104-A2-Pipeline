@@ -3,7 +3,7 @@ import './app.css'
 
 import TabBar from './components/TabBar'
 import PipelineFlow from './components/PipelineFlow'
-import { loadAll, saveAll, createPipeline, uid } from './utils/storage'
+import { loadAll, saveAll, createPipeline } from './utils/storage'
 
 export default function App() {
   const [data, setData] = useState(() => loadAll())
@@ -15,7 +15,6 @@ export default function App() {
     saveAll(data.pipelines, data.activeId)
   }, [data])
 
-  // Snapshot current flow state into the active pipeline before switching
   function snapshotCurrent(pipelines, activeId) {
     if (!flowStateRef.current) return pipelines
     const nodes = flowStateRef.current.getNodes()

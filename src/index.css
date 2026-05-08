@@ -3,17 +3,3 @@
   margin: 0;
   padding: 0;
 }
-
-body {
-  font-family: 'Georgia', serif;
-  background: #0f1117;
-  color: #e8e0d0;
-  height: 100vh;
-  overflow: hidden;
-}
-
-#root {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
